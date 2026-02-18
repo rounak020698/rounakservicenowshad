@@ -21,6 +21,9 @@ export default function Layout() {
               <TabsTrigger value="/demo" asChild>
                 <Link to="/demo">Demo Page Route</Link>
               </TabsTrigger>
+              <TabsTrigger value="/subscriptions" asChild>
+                <Link to="/subscriptions">Subscription Page</Link>
+              </TabsTrigger>
             </TabsList>
           </Tabs>
           <ThemeSwitch />

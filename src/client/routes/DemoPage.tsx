@@ -93,10 +93,7 @@ export function DemoPage() {
           <img src="https://avatars.githubusercontent.com/u/72518640?s=280&v=4" className="w-8" />
         </AlertTitle>
         <AlertDescription className="text-base">
-          This demo page shows how to use the DataTable component from sn-shadcn-kit with data fetching via Tanstack
-          Query. This means each route is cached, e.g. going from one page on the table to another and then back will
-          not trigger a new fetch. A useful pattern so you don't have to rely on individual components fetching their
-          own data.
+          SNAngry
         </AlertDescription>
       </Alert>
       {isLoading ? (

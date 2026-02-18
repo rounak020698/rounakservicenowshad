@@ -4,8 +4,8 @@ import htmlPage from '../../client/index.html'
 
 UiPage({
     $id: Now.ID['shadcn-ui-kit-template'],
-    endpoint: 'something.do',
-    description: 'Shadcn UI Kit Template Testing',
+    endpoint: 'x_1835748_react_temp.do',
+    description: 'Subscription UI Kit Template',
     category: 'general',
     html: htmlPage,
     direct: true,

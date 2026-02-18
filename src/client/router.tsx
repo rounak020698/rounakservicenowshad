@@ -4,6 +4,7 @@ import HomePage from "./routes/HomePage";
 import { createHashRouter } from "react-router";
 // import { queryClient } from "./queryClient.ts";
 import { DemoPage } from "./routes/DemoPage";
+import SubscriptionPage from "./routes/SubscriptionPage";
 import NotFoundError from "./routes/errors/NotFoundError";
 import GeneralError from "./routes/errors/GeneralError";
 
@@ -16,6 +17,7 @@ export function makeRouter() {
       children: [
         { index: true, element: <HomePage /> },
         { path: "demo", element: <DemoPage /> },
+        { path: "subscriptions", element: <SubscriptionPage /> },
         { path: "*", element: <NotFoundError /> },
       ],
     },
