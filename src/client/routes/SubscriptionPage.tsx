@@ -4,6 +4,7 @@ import QuickActionTile from "../components/subscription/QuickActionTile";
 import { useQuery } from "@tanstack/react-query";
 import { getTableRows } from "sn-shadcn-kit/table";
 import { getAxiosInstance } from "sn-shadcn-kit";
+import { List, Users, FileText, AlertTriangle } from "lucide-react";
 import { useTheme } from "../context/theme-context";
 import shadcnLight from "../assets/shadcn-light.png";
 import shadcnDark from "../assets/shadcn-dark.png";
@@ -279,25 +280,25 @@ export default function SubscriptionPage() {
         <section className="mt-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <QuickActionTile
-              icon="list"
+              icon={<List size={18} />}
               title="Manage my subscriptions"
               desc="View and edit your active subscriptions"
               onClick={() => console.log("Manage my subscriptions")}
             />
             <QuickActionTile
-              icon="people"
+              icon={<Users size={18} />}
               title="Manage for others"
               desc="Create or modify subscriptions for other users"
               onClick={() => console.log("Manage for others")}
             />
             <QuickActionTile
-              icon="template"
+              icon={<FileText size={18} />}
               title="Templates and setup"
               desc="Manage templates, defaults and channels"
               onClick={() => console.log("Templates and setup")}
             />
             <QuickActionTile
-              icon="alert"
+              icon={<AlertTriangle size={18} />}
               title="Triage issues"
               desc="Review delivery or subscription errors"
               onClick={() => console.log("Triage issues")}
