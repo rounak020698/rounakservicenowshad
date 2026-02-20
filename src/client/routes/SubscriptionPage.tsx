@@ -9,35 +9,62 @@ import { useTheme } from "../context/theme-context";
 import shadcnLight from "../assets/shadcn-light.png";
 import shadcnDark from "../assets/shadcn-dark.png";
 
+
 /* -------------------- API -------------------- */
 
-const fetchUsers = async () => {
+// const fetchUsers = async () => {
+//   const controller = new AbortController();
+//   const result = (
+//     await getTableRows(
+//       "sys_user",
+//       //"active=true",
+//       "active=true^ORDERBYname",
+//       "sys_id,name",
+//       0,
+//       1000,
+//       controller.signal
+//     )
+//   ).data.result;
+//   console.log("users", result);
+//   return result;
+// };
+const fetchUsers = async (search: string) => {
+  //if(!search) return;
   const controller = new AbortController();
-  return (
+  const query = search ?`nameLIKE${search}^active=true` : "active=true";
+  const result = (
     await getTableRows(
       "sys_user",
-      "ORDERBYname",
+      //"active=true",
+      query,
+     // `nameLIKE${search}^active=true`,
       "sys_id,name",
       0,
-      100,
+      20,
       controller.signal
     )
   ).data.result;
+  console.log("users", result);
+  return result;
 };
-
-const fetchTemplates = async () => {
+const fetchTemplates = async (search: string) => {
+  const subsquery = search ?`nameLIKE${search}^active=true^table=sys_notif_subscription` : "active=true^table=sys_notif_subscription";
   const controller = new AbortController();
-  return (
+  const result = (
     await getTableRows(
       "sys_template",
-      "ORDERBYname",
+      subsquery,
+      //"ORDERBYname",
       "sys_id,name",
       0,
       100,
       controller.signal
     )
   ).data.result;
-};
+   console.log("Template", result);
+  return result;
+}; 
+
 
 /* -------------------- Helpers -------------------- */
 
@@ -85,16 +112,33 @@ export default function SubscriptionPage() {
 
   /* -------- React Query -------- */
 
-  const { data: users } = useQuery({ queryKey: ["users"], queryFn: fetchUsers });
-  const { data: templates } = useQuery({
-    queryKey: ["templates"],
-    queryFn: fetchTemplates,
+ // const { data: users } = useQuery({ queryKey: ["users"], queryFn: fetchUsers });
+
+ const {data: users, isLoading: isLoadingUsers} =useQuery({
+    queryKey: ["users", userSearch],
+    queryFn: () => fetchUsers(userSearch),
+    //enabled: userSearch.length > 2,
+    enabled: openDropdown ==='user'
+  });
+  const { data: templates , isLoading: isLoadingTemplates } = useQuery({
+    queryKey: ["templates", templateSearch],
+    queryFn: () => fetchTemplates(templateSearch),
+    enabled: openDropdown ==='template'
   });
 
-  const filteredUsers = filterByName(users, userSearch);
-  const filteredTemplates = filterByName(templates, templateSearch);
+  //const filteredUsers = filterByName(users, userSearch);
+  const filteredUsers = users || [];
+  const filteredTemplates = templates|| [];
+ // const filteredTemplates = filterByName(templates, templateSearch);
 
   /* -------- Execute -------- */
+  const handleCancel =() => {
+    setSelectedUser(null);
+    setSelectedTemplate(null);
+    setUserSearch("");
+    setTemplateSearch("");
+    setOpenDropdown(null);
+  }
 
   const handleExecute = async () => {
     if (!selectedUser || !selectedTemplate) {
@@ -106,7 +150,7 @@ export default function SubscriptionPage() {
       const axiosInstance = getAxiosInstance();
       await axiosInstance.post("/api/now/table/sys_notif_subscription", {
         user: selectedUser,
-        u_descroption: selectedTemplate,
+        u_subscription_history: selectedTemplate,
       });
 
       setMessage({ type: "success", text: "Subscription created successfully" });
@@ -124,10 +168,16 @@ export default function SubscriptionPage() {
 
   const renderDropdown = (
     items: any[],
-    onSelect: (id: string, label: string) => void
+    onSelect: (id: string, label: string) => void,
+    isLoading?: boolean
   ) => (
     <div className="absolute z-10 w-full mt-1 bg-popover border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
-      {items?.length ? (
+      {isLoading ? (
+        <div className="p-3 text-sm text-muted-foreground flex items-center justify-center">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-foreground"></div>
+          <span className="ml-2">Loading...</span>
+        </div>
+      ) : items?.length ? (
         items.map((item) => (
           <div
             key={item.sys_id.value}
@@ -196,6 +246,7 @@ export default function SubscriptionPage() {
                   value={userSearch}
                   onChange={(e) => {
                     setUserSearch(e.target.value);
+                    setSelectedUser(null);
                     setOpenDropdown("user");
                   }}
                   onFocus={() => setOpenDropdown("user")}
@@ -206,7 +257,7 @@ export default function SubscriptionPage() {
                     setSelectedUser(id);
                     setUserSearch(label);
                     setOpenDropdown(null);
-                  })}
+                  }, isLoadingUsers)}
               </div>
 
               {/* Channel */}
@@ -233,6 +284,7 @@ export default function SubscriptionPage() {
                   value={templateSearch}
                   onChange={(e) => {
                     setTemplateSearch(e.target.value);
+                    setSelectedTemplate(null);
                     setOpenDropdown("template");
                   }}
                   onFocus={() => setOpenDropdown("template")}
@@ -243,7 +295,7 @@ export default function SubscriptionPage() {
                     setSelectedTemplate(id);
                     setTemplateSearch(label);
                     setOpenDropdown(null);
-                  })}
+                  },isLoadingTemplates)}
               </div>
 
               {/* Frequency */}
@@ -260,7 +312,7 @@ export default function SubscriptionPage() {
 
           {/* Footer */}
           <div className="mt-6 flex items-center justify-between">
-            <button className="text-muted-foreground">Cancel</button>
+            <button onClick={handleCancel} className="text-muted-foreground">Cancel</button>
 
             <div className="flex gap-3">
               {/* <button className="px-4 py-2 rounded-md border border-input text-foreground">
