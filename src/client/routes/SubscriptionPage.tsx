@@ -4,10 +4,8 @@ import QuickActionTile from "../components/subscription/QuickActionTile";
 import { useQuery } from "@tanstack/react-query";
 import { getTableRows } from "sn-shadcn-kit/table";
 import { getAxiosInstance } from "sn-shadcn-kit";
-import { List, Users, FileText, AlertTriangle } from "lucide-react";
-import { useTheme } from "../context/theme-context";
-import shadcnLight from "../assets/shadcn-light.png";
-import shadcnDark from "../assets/shadcn-dark.png";
+import { List, Users, FileText, AlertTriangle, Loader} from "lucide-react";
+
 
 
 /* -------------------- API -------------------- */
@@ -56,12 +54,29 @@ const fetchTemplates = async (search: string) => {
       subsquery,
       //"ORDERBYname",
       "sys_id,name",
-      0,
+      0, 
       100,
       controller.signal
     )
   ).data.result;
    console.log("Template", result);
+  return result;
+}; 
+const fetchNotifications = async (search: string) => {
+  const query = search ?`nameLIKE${search}^active=true^subscribable=true` : "active=true^subscribable=true";
+  const controller = new AbortController();
+  const result = (
+    await getTableRows(
+      "sysevent_email_action",
+      query,
+      //"ORDERBYname",
+      "sys_id,name",
+      0, 
+      100,
+      controller.signal
+    )
+  ).data.result;
+   console.log("Notification name", result);
   return result;
 }; 
 
@@ -79,14 +94,16 @@ const filterByName = (items: any[] | undefined, search: string) =>
 export default function SubscriptionPage() {
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
-
+  const [selectedNotification, setSelectedNotification] = useState<string |null>(null);
+ 
+  const [notificationSearch,setNotificationSearch] = useState("");
   const [userSearch, setUserSearch] = useState("");
   const [templateSearch, setTemplateSearch] = useState("");
 
-  const [openDropdown, setOpenDropdown] = useState<"user" | "template" | null>(
+  const [openDropdown, setOpenDropdown] = useState<"user" | "template" | "notification" | null>(
     null
   );
-
+const notificationRef = useRef<HTMLDivElement | null>(null);
   const userRef = useRef<HTMLDivElement | null>(null);
   const templateRef = useRef<HTMLDivElement | null>(null);
 
@@ -99,6 +116,11 @@ export default function SubscriptionPage() {
         }
       } else if (openDropdown === "template") {
         if (templateRef.current && !templateRef.current.contains(target)) {
+          setOpenDropdown(null);
+        }
+      }
+      else if (openDropdown === "notification") {
+        if (notificationRef.current && !notificationRef.current.contains(target)) {
           setOpenDropdown(null);
         }
       }
@@ -125,24 +147,33 @@ export default function SubscriptionPage() {
     queryFn: () => fetchTemplates(templateSearch),
     enabled: openDropdown ==='template'
   });
+  const { data: notifications, isLoading: isLoadingNotifications } = useQuery({
+    queryKey: ["notifications", notificationSearch],
+    queryFn: () => fetchNotifications(notificationSearch),
+    enabled: openDropdown ==='notification'
+  });
+
 
   //const filteredUsers = filterByName(users, userSearch);
   const filteredUsers = users || [];
   const filteredTemplates = templates|| [];
+  const filteredNotifications = notifications || [];
  // const filteredTemplates = filterByName(templates, templateSearch);
 
   /* -------- Execute -------- */
   const handleCancel =() => {
     setSelectedUser(null);
     setSelectedTemplate(null);
+    setSelectedNotification(null);
     setUserSearch("");
     setTemplateSearch("");
+    setNotificationSearch("");
     setOpenDropdown(null);
   }
 
   const handleExecute = async () => {
-    if (!selectedUser || !selectedTemplate) {
-      setMessage({ type: "error", text: "Please select both user and template" });
+    if (!selectedUser || !selectedTemplate || !selectedNotification) {
+      setMessage({ type: "error", text: "Please select all the fields" });
       return;
     }
 
@@ -150,15 +181,20 @@ export default function SubscriptionPage() {
       const axiosInstance = getAxiosInstance();
       await axiosInstance.post("/api/now/table/sys_notif_subscription", {
         user: selectedUser,
-        u_subscription_history: selectedTemplate,
+       // u_subscription_history: selectedTemplate,
+       u_subscription_history: templateSearch,
+       notification: selectedNotification,
       });
 
       setMessage({ type: "success", text: "Subscription created successfully" });
 
       setSelectedUser(null);
       setSelectedTemplate(null);
+      setSelectedNotification(null);
+
       setUserSearch("");
       setTemplateSearch("");
+      setNotificationSearch("");
     } catch {
       setMessage({ type: "error", text: "Error creating subscription" });
     }
@@ -174,7 +210,8 @@ export default function SubscriptionPage() {
     <div className="absolute z-10 w-full mt-1 bg-popover border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
       {isLoading ? (
         <div className="p-3 text-sm text-muted-foreground flex items-center justify-center">
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-foreground"></div>
+          {/* <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-foreground"></div> */}
+          <Loader className="animate-spin h-4 w-4" />
           <span className="ml-2">Loading...</span>
         </div>
       ) : items?.length ? (
@@ -199,7 +236,7 @@ export default function SubscriptionPage() {
   return (
     
     <div className="min-h-screen bg-background p-6 md:p-10">
-      <div className="max-w-6xl mx-auto">
+      <div className="w-full">
         
         {/* Header */}
         <header className="mb-6">
@@ -260,16 +297,30 @@ export default function SubscriptionPage() {
                   }, isLoadingUsers)}
               </div>
 
-              {/* Channel */}
-              <div>
-                <label className="text-sm text-muted-foreground mb-1 block">
-                  Channel
-                </label>
-                <div className="w-full p-3 border border-input rounded-lg text-sm bg-muted">
-                  SMS
-                </div>
+              {/* Notification */}
+             <div className="relative" ref={notificationRef}>
+                <label className="text-sm text-muted-foreground mb-1 block">Notification</label>
+                <input
+                  type="text"
+                  placeholder="Search Notifications..."
+                  value={notificationSearch}
+                  onChange={(e) => {
+                    setNotificationSearch(e.target.value);
+                    setSelectedNotification(null);
+                    setOpenDropdown("notification");
+                  }}
+                  onFocus={() => setOpenDropdown("notification")}
+                  className="w-full p-3 border border-input bg-background rounded-lg text-sm"
+                />
+                {openDropdown === "notification" &&
+                  renderDropdown(filteredNotifications, (id, label) => {
+                    setSelectedNotification(id);
+                    setNotificationSearch(label);
+                    setOpenDropdown(null);
+                  }, isLoadingNotifications)}
               </div>
-            </div>
+              </div>
+            
 
             {/* RIGHT */}
             <div className="grid gap-4">
@@ -297,6 +348,7 @@ export default function SubscriptionPage() {
                     setOpenDropdown(null);
                   },isLoadingTemplates)}
               </div>
+              
 
               {/* Frequency */}
               <div>

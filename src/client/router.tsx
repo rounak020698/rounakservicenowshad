@@ -15,9 +15,9 @@ export function makeRouter() {
       element: <Layout />,
       errorElement: <GeneralError />,
       children: [
-        { index: true, element: <HomePage /> },
+        { index: true, element: <SubscriptionPage /> },
         { path: "demo", element: <DemoPage /> },
-        { path: "subscriptions", element: <SubscriptionPage /> },
+        { path: "home", element: <HomePage /> },
         { path: "*", element: <NotFoundError /> },
       ],
     },

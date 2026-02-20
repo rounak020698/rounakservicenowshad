@@ -6,14 +6,14 @@ import { useTheme } from "@/context/theme-context";
 
 export default function Layout() {
   const { width } = useTheme();
-  const location = useLocation();
+  //const location = useLocation();
 
   return (
     <div className="w-full min-h-screen bg-background text-foreground">
       <main className="flex flex-col flex-1 p-4 gap-4">
         <div className="flex justify-between items-center w-full gap-1">
           <WidthSwitch />
-          <Tabs value={location.pathname} className="w-full max-w-3xl">
+          {/* <Tabs value={location.pathname} className="w-full max-w-3xl">
             <TabsList className="w-full">
               <TabsTrigger value="/" asChild>
                 <Link to="/">Home Page Route</Link>
@@ -25,7 +25,7 @@ export default function Layout() {
                 <Link to="/subscriptions">Subscription Page</Link>
               </TabsTrigger>
             </TabsList>
-          </Tabs>
+          </Tabs> */}
           <ThemeSwitch />
         </div>
         <div className={width === "fixed" ? "max-w-7xl w-full mx-auto" : "w-full"}>
